@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>thatday — Login</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .auth-container {
+        max-width: 380px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
+
+      .auth-container h1 {
+        text-align: center;
+        color: var(--accent);
+        font-size: 2.4rem;
+        margin-bottom: 0.3rem;
+      }
+
+      .auth-container .subtitle {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .auth-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.8rem;
+      }
+
+      .auth-card h2 {
+        font-size: 1.2rem;
+        margin-bottom: 1.2rem;
+      }
+
+      .auth-card label {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.3rem;
+        margin-top: 1rem;
+      }
+
+      .auth-card label:first-of-type {
+        margin-top: 0;
+      }
+
+      .auth-card input[type="text"],
+      .auth-card input[type="email"],
+      .auth-card input[type="password"] {
+        width: 100%;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 0.95rem;
+        font-family: var(--font);
+      }
+
+      .auth-card input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .auth-card .btn-primary {
+        margin-top: 1.5rem;
+        width: 100%;
+      }
+
+      .auth-error {
+        margin-top: 0.8rem;
+        color: var(--danger);
+        font-size: 0.85rem;
+        text-align: center;
+      }
+
+      .auth-switch {
+        text-align: center;
+        margin-top: 1.2rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      .auth-switch a {
+        color: var(--accent);
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      .auth-switch a:hover {
+        text-decoration: underline;
+      }
+
+      .auth-card[hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="auth-container">
+      <h1>thatday</h1>
+      <p class="subtitle">One photo. One headline. Every day.</p>
+
+      <!-- Login Form -->
+      <div id="login-card" class="auth-card">
+        <h2>Log in</h2>
+        <form id="login-form">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" required autocomplete="email" />
+
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" required autocomplete="current-password" />
+
+          <button type="submit" class="btn-primary">Log in</button>
+          <p id="login-error" class="auth-error" hidden></p>
+        </form>
+        <p class="auth-switch">
+          Don't have an account? <a id="show-register">Sign up</a>
+        </p>
+      </div>
+
+      <!-- Register Form -->
+      <div id="register-card" class="auth-card" hidden>
+        <h2>Create account</h2>
+        <form id="register-form">
+          <label for="register-name">Name</label>
+          <input type="text" id="register-name" required autocomplete="name" />
+
+          <label for="register-email">Email</label>
+          <input type="email" id="register-email" required autocomplete="email" />
+
+          <label for="register-password">Password</label>
+          <input type="password" id="register-password" required minlength="6" autocomplete="new-password" />
+
+          <button type="submit" class="btn-primary">Sign up</button>
+          <p id="register-error" class="auth-error" hidden></p>
+        </form>
+        <p class="auth-switch">
+          Already have an account? <a id="show-login">Log in</a>
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // If already logged in, go to main page
+      if (localStorage.getItem("token")) {
+        window.location.href = "/";
+      }
+
+      const loginCard = document.getElementById("login-card");
+      const registerCard = document.getElementById("register-card");
+
+      document.getElementById("show-register").addEventListener("click", () => {
+        loginCard.hidden = true;
+        registerCard.hidden = false;
+      });
+
+      document.getElementById("show-login").addEventListener("click", () => {
+        registerCard.hidden = true;
+        loginCard.hidden = false;
+      });
+
+      // Login
+      document.getElementById("login-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const errorEl = document.getElementById("login-error");
+        errorEl.hidden = true;
+
+        const email = document.getElementById("login-email").value;
+        const password = document.getElementById("login-password").value;
+
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Login failed");
+
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("userName", data.user.name);
+          window.location.href = "/";
+        } catch (err) {
+          errorEl.textContent = err.message;
+          errorEl.hidden = false;
+        }
+      });
+
+      // Register
+      document.getElementById("register-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const errorEl = document.getElementById("register-error");
+        errorEl.hidden = true;
+
+        const name = document.getElementById("register-name").value;
+        const email = document.getElementById("register-email").value;
+        const password = document.getElementById("register-password").value;
+
+        try {
+          const res = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Registration failed");
+
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("userName", data.user.name);
+          window.location.href = "/";
+        } catch (err) {
+          errorEl.textContent = err.message;
+          errorEl.hidden = false;
+        }
+      });
+    </script>
+  </body>
+</html>

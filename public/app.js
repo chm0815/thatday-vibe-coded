@@ -1,3 +1,26 @@
+// --- Auth guard ---
+const token = localStorage.getItem("token");
+if (!token) {
+  window.location.href = "/login.html";
+}
+
+function authHeaders() {
+  return { Authorization: `Bearer ${token}` };
+}
+
+// Handle 401 responses globally — redirect to login
+function handleAuthError(res) {
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userName");
+    window.location.href = "/login.html";
+    return true;
+  }
+  return false;
+}
+
+// --- DOM refs ---
+
 const grid = document.getElementById("grid");
 const emptyState = document.getElementById("empty-state");
 const addBtn = document.getElementById("add-btn");
@@ -26,9 +49,24 @@ const detailDate = document.getElementById("detail-date");
 const detailDelete = document.getElementById("detail-delete");
 const detailPrev = document.getElementById("detail-prev");
 const detailNext = document.getElementById("detail-next");
+const userGreeting = document.getElementById("user-greeting");
+const logoutBtn = document.getElementById("logout-btn");
 
 let currentDetailId = null;
 let currentEntries = [];
+
+// --- User greeting & logout ---
+
+const userName = localStorage.getItem("userName");
+if (userName) {
+  userGreeting.textContent = `Hi, ${userName}`;
+}
+
+logoutBtn.addEventListener("click", () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("userName");
+  window.location.href = "/login.html";
+});
 
 // --- Date helpers ---
 
@@ -50,29 +88,39 @@ function todayStr() {
 // --- API ---
 
 async function fetchEntries() {
-  const res = await fetch("/api/entries");
+  const res = await fetch("/api/entries", {
+    headers: authHeaders(),
+  });
+  if (handleAuthError(res)) return [];
   return res.json();
 }
 
 async function createEntry(formData) {
   const res = await fetch("/api/entries", {
     method: "POST",
+    headers: authHeaders(),
     body: formData,
   });
+  handleAuthError(res);
   return res;
 }
 
 async function deleteEntry(id) {
-  const res = await fetch(`/api/entries/${id}`, { method: "DELETE" });
+  const res = await fetch(`/api/entries/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  handleAuthError(res);
   return res;
 }
 
 async function updateEntry(id, data) {
   const res = await fetch(`/api/entries/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
+  handleAuthError(res);
   return res;
 }
 
@@ -253,8 +301,11 @@ detailPhotoInput.addEventListener("change", async () => {
 
   const res = await fetch(`/api/entries/${currentDetailId}`, {
     method: "PUT",
+    headers: authHeaders(),
     body: formData,
   });
+
+  if (handleAuthError(res)) return;
 
   if (res.ok) {
     const updated = await res.json();
@@ -277,7 +328,6 @@ detailHeadline.addEventListener("click", () => {
 async function saveHeadline() {
   const newHeadline = detailHeadlineInput.value.trim();
   if (!newHeadline || newHeadline === detailHeadline.textContent) {
-    // No change or empty — revert
     detailHeadlineInput.hidden = true;
     detailHeadline.hidden = false;
     return;
@@ -322,7 +372,6 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  // Don't navigate when editing the headline
   if (document.activeElement === detailHeadlineInput) return;
 
   if (!detailOverlay.hidden) {

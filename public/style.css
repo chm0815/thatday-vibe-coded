@@ -32,7 +32,36 @@ body {
 
 header {
   text-align: center;
-  padding: 3rem 1.5rem 2rem;
+  padding: 1rem 1.5rem 2rem;
+}
+
+.header-top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.user-greeting {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.btn-logout {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btn-logout:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
 }
 
 header h1 {
