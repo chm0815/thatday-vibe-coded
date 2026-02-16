@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>thatday</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>thatday</h1>
+      <p class="subtitle">One photo. One headline. Every day.</p>
+      <button id="add-btn" class="btn-primary">+ Add a Day</button>
+    </header>
+
+    <main id="grid" class="grid"></main>
+
+    <div id="empty-state" class="empty-state" hidden>
+      <p>No entries yet. Add your first day!</p>
+    </div>
+
+    <!-- Add / Edit Modal -->
+    <div id="modal-overlay" class="modal-overlay" hidden>
+      <div class="modal">
+        <button id="modal-close" class="modal-close">&times;</button>
+        <h2 id="modal-title">Add a Day</h2>
+        <form id="entry-form">
+          <input type="hidden" id="entry-id" />
+
+          <label for="entry-date">Date</label>
+          <input type="date" id="entry-date" required />
+
+          <label for="entry-headline">Headline <span id="char-count" class="char-count">(0 / 300)</span></label>
+          <input
+            type="text"
+            id="entry-headline"
+            maxlength="300"
+            placeholder="What happened that day?"
+            required
+          />
+
+          <label for="entry-photo">Photo</label>
+          <input type="file" id="entry-photo" accept="image/*" />
+          <div id="photo-preview" class="photo-preview" hidden>
+            <img id="preview-img" src="" alt="Preview" />
+          </div>
+
+          <button type="submit" class="btn-primary" id="submit-btn">Save</button>
+          <p id="form-error" class="form-error" hidden></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detail-overlay" class="modal-overlay" hidden>
+      <button id="detail-prev" class="detail-nav detail-nav-left" title="Previous">&#8249;</button>
+      <div class="modal modal-detail">
+        <button id="detail-close" class="modal-close">&times;</button>
+        <img id="detail-img" src="" alt="" class="detail-img" />
+        <div id="detail-photo-upload" class="detail-photo-upload" hidden>
+          <p>No photo yet</p>
+          <button id="detail-add-photo-btn" class="btn-primary" type="button">Add Photo</button>
+          <input type="file" id="detail-photo-input" accept="image/*" hidden />
+        </div>
+        <div class="detail-info">
+          <h2 id="detail-headline" class="editable" title="Click to edit"></h2>
+          <input type="text" id="detail-headline-input" class="detail-headline-input" maxlength="300" hidden />
+          <p id="detail-date" class="detail-date"></p>
+        </div>
+        <div class="detail-actions">
+          <button id="detail-delete" class="btn-danger">Delete</button>
+        </div>
+      </div>
+      <button id="detail-next" class="detail-nav detail-nav-right" title="Next">&#8250;</button>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
