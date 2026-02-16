@@ -28,6 +28,21 @@ body {
   min-height: 100vh;
 }
 
+/* Offline banner */
+
+.offline-banner {
+  background: var(--accent);
+  color: #111;
+  text-align: center;
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.offline-banner[hidden] {
+  display: none;
+}
+
 /* Header */
 
 header {

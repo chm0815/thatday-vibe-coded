@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>thatday — Login</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0f0f0f" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <style>
       .auth-container {
         max-width: 380px;
@@ -235,6 +238,11 @@
           submitBtn.disabled = false;
         }
       });
+
+      // Service Worker
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      }
     </script>
   </body>
 </html>

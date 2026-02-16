@@ -1,0 +1,17 @@
+{
+  "name": "thatday",
+  "short_name": "thatday",
+  "description": "One photo. One headline. Every day.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#0f0f0f",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

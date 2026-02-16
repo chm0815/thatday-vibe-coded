@@ -55,6 +55,7 @@ const detailReplacePhotoBtn = document.getElementById("detail-replace-photo-btn"
 const detailReplacePhotoInput = document.getElementById("detail-replace-photo-input");
 const userGreeting = document.getElementById("user-greeting");
 const logoutBtn = document.getElementById("logout-btn");
+const offlineBanner = document.getElementById("offline-banner");
 
 let currentDetailId = null;
 let currentEntries = [];
@@ -430,3 +431,19 @@ document.addEventListener("keydown", (e) => {
 // --- Init ---
 
 render();
+
+// --- Offline / Online ---
+
+function updateOnlineStatus() {
+  offlineBanner.hidden = navigator.onLine;
+}
+
+window.addEventListener("online", updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
+updateOnlineStatus();
+
+// --- Service Worker ---
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
