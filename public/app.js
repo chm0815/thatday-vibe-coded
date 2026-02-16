@@ -49,6 +49,10 @@ const detailDate = document.getElementById("detail-date");
 const detailDelete = document.getElementById("detail-delete");
 const detailPrev = document.getElementById("detail-prev");
 const detailNext = document.getElementById("detail-next");
+const detailPhotoError = document.getElementById("detail-photo-error");
+const detailPhotoActions = document.getElementById("detail-photo-actions");
+const detailReplacePhotoBtn = document.getElementById("detail-replace-photo-btn");
+const detailReplacePhotoInput = document.getElementById("detail-replace-photo-input");
 const userGreeting = document.getElementById("user-greeting");
 const logoutBtn = document.getElementById("logout-btn");
 
@@ -147,7 +151,7 @@ async function render() {
     card.dataset.id = entry.id;
     const photoHtml = entry.photo
       ? `<img src="/uploads/${entry.photo}" alt="${escapeHtml(entry.headline)}" loading="lazy" />`
-      : `<div class="card-placeholder"></div>`;
+      : `<div class="card-placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`;
     card.innerHTML = `
       ${photoHtml}
       <div class="card-info">
@@ -172,6 +176,7 @@ function openAddModal() {
   modalTitle.textContent = "Add a Day";
   entryId.value = "";
   entryDate.value = todayStr();
+  entryDate.max = todayStr();
   entryHeadline.value = "";
   entryPhoto.value = "";
   entryPhoto.required = false;
@@ -250,7 +255,14 @@ function openDetail(entry) {
   detailImg.alt = entry.headline;
   detailImg.hidden = !entry.photo;
   detailPhotoUpload.hidden = !!entry.photo;
+  detailPhotoActions.hidden = !entry.photo;
   detailPhotoInput.value = "";
+  detailReplacePhotoInput.value = "";
+  detailPhotoError.hidden = true;
+  detailReplacePhotoBtn.disabled = false;
+  detailReplacePhotoBtn.textContent = "Replace Photo";
+  detailAddPhotoBtn.disabled = false;
+  detailAddPhotoBtn.textContent = "Add Photo";
   detailHeadline.textContent = entry.headline;
   detailHeadline.hidden = false;
   detailHeadlineInput.hidden = true;
@@ -287,7 +299,7 @@ detailDelete.addEventListener("click", async () => {
   await render();
 });
 
-// Photo upload in detail view
+// Photo upload in detail view (add)
 detailAddPhotoBtn.addEventListener("click", () => {
   detailPhotoInput.click();
 });
@@ -295,26 +307,56 @@ detailAddPhotoBtn.addEventListener("click", () => {
 detailPhotoInput.addEventListener("change", async () => {
   const file = detailPhotoInput.files[0];
   if (!file || !currentDetailId) return;
+  await uploadDetailPhoto(file, detailAddPhotoBtn, "Add Photo");
+});
+
+// Photo replace in detail view
+detailReplacePhotoBtn.addEventListener("click", () => {
+  detailReplacePhotoInput.click();
+});
+
+detailReplacePhotoInput.addEventListener("change", async () => {
+  const file = detailReplacePhotoInput.files[0];
+  if (!file || !currentDetailId) return;
+  await uploadDetailPhoto(file, detailReplacePhotoBtn, "Replace Photo");
+});
+
+async function uploadDetailPhoto(file, btn, label) {
+  detailPhotoError.hidden = true;
+  btn.disabled = true;
+  btn.textContent = "Uploading...";
 
   const formData = new FormData();
   formData.append("photo", file);
 
-  const res = await fetch(`/api/entries/${currentDetailId}`, {
-    method: "PUT",
-    headers: authHeaders(),
-    body: formData,
-  });
+  try {
+    const res = await fetch(`/api/entries/${currentDetailId}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: formData,
+    });
 
-  if (handleAuthError(res)) return;
+    if (handleAuthError(res)) return;
 
-  if (res.ok) {
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to upload photo");
+    }
+
     const updated = await res.json();
     detailImg.src = `/uploads/${updated.photo}`;
     detailImg.hidden = false;
     detailPhotoUpload.hidden = true;
+    detailPhotoActions.hidden = false;
     await render();
+  } catch (err) {
+    detailPhotoError.textContent = err.message;
+    detailPhotoError.hidden = false;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
   }
-});
+}
 
 // Inline headline editing
 detailHeadline.addEventListener("click", () => {

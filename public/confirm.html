@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>thatday — Confirm Account</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .confirm-container {
+        max-width: 420px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+        text-align: center;
+      }
+
+      .confirm-container h1 {
+        color: var(--accent);
+        font-size: 2.4rem;
+        margin-bottom: 0.3rem;
+      }
+
+      .confirm-container .subtitle {
+        margin-bottom: 2rem;
+      }
+
+      .confirm-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2rem 1.8rem;
+      }
+
+      .confirm-card h2 {
+        font-size: 1.2rem;
+        margin-bottom: 0.8rem;
+      }
+
+      .confirm-card p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 1.2rem;
+      }
+
+      .confirm-card .btn-primary {
+        display: inline-block;
+        text-decoration: none;
+      }
+
+      .confirm-card .status-error h2 {
+        color: var(--danger);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="confirm-container">
+      <h1>thatday</h1>
+      <p class="subtitle">One photo. One headline. Every day.</p>
+
+      <div class="confirm-card" id="status-success" hidden>
+        <h2>Account confirmed</h2>
+        <p>Your email has been verified. You can now log in.</p>
+        <a href="/login.html" class="btn-primary">Go to login</a>
+      </div>
+
+      <div class="confirm-card" id="status-already" hidden>
+        <h2>Already confirmed</h2>
+        <p>This account was already verified. You can log in.</p>
+        <a href="/login.html" class="btn-primary">Go to login</a>
+      </div>
+
+      <div class="confirm-card status-error" id="status-invalid" hidden>
+        <h2>Invalid link</h2>
+        <p>This confirmation link is not valid. It may have already been used, or the URL is incorrect.</p>
+        <a href="/login.html" class="btn-primary">Go to login</a>
+      </div>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get("status") || "invalid";
+      const el = document.getElementById(`status-${status}`);
+      if (el) {
+        el.hidden = false;
+      } else {
+        document.getElementById("status-invalid").hidden = false;
+      }
+    </script>
+  </body>
+</html>

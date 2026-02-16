@@ -66,6 +66,11 @@
           <button id="detail-add-photo-btn" class="btn-primary" type="button">Add Photo</button>
           <input type="file" id="detail-photo-input" accept="image/*" hidden />
         </div>
+        <div class="detail-photo-actions" id="detail-photo-actions" hidden>
+          <button id="detail-replace-photo-btn" class="btn-secondary" type="button">Replace Photo</button>
+          <input type="file" id="detail-replace-photo-input" accept="image/*" hidden />
+        </div>
+        <p id="detail-photo-error" class="form-error detail-photo-error" hidden></p>
         <div class="detail-info">
           <h2 id="detail-headline" class="editable" title="Click to edit"></h2>
           <input type="text" id="detail-headline-input" class="detail-headline-input" maxlength="300" hidden />

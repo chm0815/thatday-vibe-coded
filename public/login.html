@@ -98,6 +98,14 @@
       .auth-card[hidden] {
         display: none;
       }
+
+      .auth-success {
+        margin-top: 0.8rem;
+        color: var(--accent);
+        font-size: 0.85rem;
+        text-align: center;
+        line-height: 1.4;
+      }
     </style>
   </head>
   <body>
@@ -136,8 +144,9 @@
           <label for="register-password">Password</label>
           <input type="password" id="register-password" required minlength="6" autocomplete="new-password" />
 
-          <button type="submit" class="btn-primary">Sign up</button>
+          <button type="submit" class="btn-primary" id="register-btn">Sign up</button>
           <p id="register-error" class="auth-error" hidden></p>
+          <p id="register-success" class="auth-success" hidden></p>
         </form>
         <p class="auth-switch">
           Already have an account? <a id="show-login">Log in</a>
@@ -195,7 +204,12 @@
       document.getElementById("register-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const errorEl = document.getElementById("register-error");
+        const successEl = document.getElementById("register-success");
+        const submitBtn = document.getElementById("register-btn");
         errorEl.hidden = true;
+        successEl.hidden = true;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Creating account...";
 
         const name = document.getElementById("register-name").value;
         const email = document.getElementById("register-email").value;
@@ -210,12 +224,15 @@
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Registration failed");
 
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("userName", data.user.name);
-          window.location.href = "/";
+          successEl.textContent = data.message || "Account created. Please check your email to confirm your account.";
+          successEl.hidden = false;
+          submitBtn.textContent = "Sign up";
+          submitBtn.disabled = false;
         } catch (err) {
           errorEl.textContent = err.message;
           errorEl.hidden = false;
+          submitBtn.textContent = "Sign up";
+          submitBtn.disabled = false;
         }
       });
     </script>

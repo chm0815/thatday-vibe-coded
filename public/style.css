@@ -95,6 +95,33 @@ header h1 {
   background: var(--accent-hover);
 }
 
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn-secondary {
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .btn-danger {
   background: var(--danger);
   color: #fff;
@@ -149,6 +176,12 @@ header h1 {
   width: 100%;
   aspect-ratio: 4 / 3;
   background: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 2rem;
+  opacity: 0.4;
 }
 
 .card-info {
@@ -336,6 +369,21 @@ form .btn-primary {
 
 .detail-photo-upload[hidden] {
   display: none;
+}
+
+.detail-photo-actions {
+  padding: 0.5rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.detail-photo-actions[hidden] {
+  display: none;
+}
+
+.detail-photo-error {
+  padding: 0 1.5rem;
+  margin-top: 0.5rem;
 }
 
 .detail-info {
