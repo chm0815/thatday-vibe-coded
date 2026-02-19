@@ -1,4 +1,4 @@
-const CACHE_NAME = "thatday-v1";
+const CACHE_NAME = "thatday-v3";
 const STATIC_ASSETS = [
   "/",
   "/index.html",
@@ -39,8 +39,12 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   // Photos: cache-first (immutable UUIDs, already cached aggressively by the server)
+  // Strip auth token from cache key so photos don't re-cache after token refresh
   if (url.pathname.startsWith("/uploads/")) {
-    event.respondWith(cacheFirst(request));
+    const cacheUrl = new URL(url);
+    cacheUrl.searchParams.delete("token");
+    const cacheKey = new Request(cacheUrl.toString());
+    event.respondWith(cacheFirstWithKey(request, cacheKey));
     return;
   }
 
@@ -64,6 +68,23 @@ async function cacheFirst(request) {
     if (response.ok) {
       const cache = await caches.open(CACHE_NAME);
       cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return new Response("", { status: 503, statusText: "Offline" });
+  }
+}
+
+// Cache-first with a separate cache key (used for photos to strip auth tokens)
+async function cacheFirstWithKey(request, cacheKey) {
+  const cached = await caches.match(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(cacheKey, response.clone());
     }
     return response;
   } catch {

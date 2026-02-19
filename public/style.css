@@ -199,6 +199,24 @@ header h1 {
   opacity: 0.4;
 }
 
+.card-placeholder-empty {
+  opacity: 0.25;
+}
+
+.card-empty {
+  opacity: 0.5;
+  border: 1px dashed var(--border);
+}
+
+.card-empty:hover {
+  opacity: 0.8;
+}
+
+.card-headline-empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .card-info {
   padding: 0.8rem 1rem 1rem;
 }

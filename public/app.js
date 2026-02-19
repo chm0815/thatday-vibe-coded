@@ -8,6 +8,10 @@ function authHeaders() {
   return { Authorization: `Bearer ${token}` };
 }
 
+function photoUrl(photoPath) {
+  return `/uploads/${photoPath}?token=${encodeURIComponent(token)}`;
+}
+
 // Handle 401 responses globally — redirect to login
 function handleAuthError(res) {
   if (res.status === 401) {
@@ -59,6 +63,7 @@ const offlineBanner = document.getElementById("offline-banner");
 
 let currentDetailId = null;
 let currentEntries = [];
+let currentCalendar = [];
 
 // --- User greeting & logout ---
 
@@ -131,6 +136,10 @@ async function updateEntry(id, data) {
 
 // --- Render ---
 
+/**
+ * Build a continuous date range (today → oldest entry), rendering
+ * a card for every day. Days without entries get an empty placeholder.
+ */
 async function render() {
   const entries = await fetchEntries();
   currentEntries = entries;
@@ -146,21 +155,60 @@ async function render() {
   emptyState.hidden = true;
   grid.hidden = false;
 
-  entries.forEach((entry) => {
+  // Build a lookup: date string → entry
+  const entryByDate = {};
+  for (const entry of entries) {
+    entryByDate[entry.date] = entry;
+  }
+
+  // Date range: today down to the oldest entry
+  const today = new Date(todayStr() + "T00:00:00");
+  const dates = entries.map((e) => e.date);
+  const oldest = new Date(dates[dates.length - 1] + "T00:00:00");
+
+  const allCards = []; // { date, entry? } — used for detail nav
+  const day = new Date(today);
+  while (day >= oldest) {
+    const dateStr = day.toISOString().split("T")[0];
+    const entry = entryByDate[dateStr] || null;
+    allCards.push({ date: dateStr, entry });
+    day.setDate(day.getDate() - 1);
+  }
+
+  // Store for prev/next navigation (includes empty slots)
+  currentCalendar = allCards;
+
+  allCards.forEach(({ date, entry }) => {
     const card = document.createElement("div");
-    card.className = "card";
-    card.dataset.id = entry.id;
-    const photoHtml = entry.photo
-      ? `<img src="/uploads/${entry.photo}" alt="${escapeHtml(entry.headline)}" loading="lazy" />`
-      : `<div class="card-placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`;
-    card.innerHTML = `
-      ${photoHtml}
-      <div class="card-info">
-        <div class="card-date">${formatDate(entry.date)}</div>
-        <div class="card-headline">${escapeHtml(entry.headline)}</div>
-      </div>
-    `;
-    card.addEventListener("click", () => openDetail(entry));
+    card.className = entry ? "card" : "card card-empty";
+    card.dataset.date = date;
+
+    if (entry) {
+      card.dataset.id = entry.id;
+      const photoHtml = entry.photo
+        ? `<img src="${photoUrl(entry.photo)}" alt="${escapeHtml(entry.headline)}" loading="lazy" />`
+        : `<div class="card-placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`;
+      card.innerHTML = `
+        ${photoHtml}
+        <div class="card-info">
+          <div class="card-date">${formatDate(date)}</div>
+          <div class="card-headline">${escapeHtml(entry.headline)}</div>
+        </div>
+      `;
+      card.addEventListener("click", () => openDetail(entry));
+    } else {
+      card.innerHTML = `
+        <div class="card-placeholder card-placeholder-empty">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="card-info">
+          <div class="card-date">${formatDate(date)}</div>
+          <div class="card-headline card-headline-empty">No entry yet</div>
+        </div>
+      `;
+      card.addEventListener("click", () => openAddModalForDate(date));
+    }
+
     grid.appendChild(card);
   });
 }
@@ -187,6 +235,11 @@ function openAddModal() {
   submitBtn.textContent = "Save";
   submitBtn.disabled = false;
   modalOverlay.hidden = false;
+}
+
+function openAddModalForDate(dateStr) {
+  openAddModal();
+  entryDate.value = dateStr;
 }
 
 function closeAddModal() {
@@ -252,7 +305,7 @@ entryForm.addEventListener("submit", async (e) => {
 
 function openDetail(entry) {
   currentDetailId = entry.id;
-  detailImg.src = entry.photo ? `/uploads/${entry.photo}` : "";
+  detailImg.src = entry.photo ? photoUrl(entry.photo) : "";
   detailImg.alt = entry.headline;
   detailImg.hidden = !entry.photo;
   detailPhotoUpload.hidden = !!entry.photo;
@@ -273,9 +326,11 @@ function openDetail(entry) {
 }
 
 function updateNavButtons() {
-  const idx = currentEntries.findIndex((e) => e.id === currentDetailId);
+  const idx = currentCalendar.findIndex(
+    (c) => c.entry && c.entry.id === currentDetailId
+  );
   detailPrev.disabled = idx <= 0;
-  detailNext.disabled = idx === -1 || idx >= currentEntries.length - 1;
+  detailNext.disabled = idx === -1 || idx >= currentCalendar.length - 1;
 }
 
 function closeDetail() {
@@ -345,7 +400,7 @@ async function uploadDetailPhoto(file, btn, label) {
     }
 
     const updated = await res.json();
-    detailImg.src = `/uploads/${updated.photo}`;
+    detailImg.src = photoUrl(updated.photo);
     detailImg.hidden = false;
     detailPhotoUpload.hidden = true;
     detailPhotoActions.hidden = false;
@@ -400,12 +455,20 @@ detailHeadlineInput.addEventListener("keydown", (e) => {
 // --- Keyboard ---
 
 function navigateDetail(direction) {
-  if (!currentDetailId || currentEntries.length === 0) return;
-  const idx = currentEntries.findIndex((e) => e.id === currentDetailId);
+  if (!currentDetailId || currentCalendar.length === 0) return;
+  const idx = currentCalendar.findIndex(
+    (c) => c.entry && c.entry.id === currentDetailId
+  );
   if (idx === -1) return;
   const nextIdx = idx + direction;
-  if (nextIdx < 0 || nextIdx >= currentEntries.length) return;
-  openDetail(currentEntries[nextIdx]);
+  if (nextIdx < 0 || nextIdx >= currentCalendar.length) return;
+  const next = currentCalendar[nextIdx];
+  if (next.entry) {
+    openDetail(next.entry);
+  } else {
+    closeDetail();
+    openAddModalForDate(next.date);
+  }
 }
 
 document.addEventListener("keydown", (e) => {

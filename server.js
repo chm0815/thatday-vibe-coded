@@ -111,13 +111,45 @@ async function processPhoto(buffer, userId) {
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
-app.use(
-  "/uploads",
-  express.static(UPLOADS_DIR, {
-    maxAge: "365d",
-    immutable: true,
-  })
-);
+// Authenticated photo serving — only the owner can access their photos
+app.get("/uploads/:userId/:filename", (req, res) => {
+  // Accept token from query param (for <img src=""> usage) or Authorization header
+  const token =
+    req.query.token ||
+    (req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer ") &&
+      req.headers.authorization.split(" ")[1]);
+
+  if (!token) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  let payload;
+  try {
+    payload = jwt.verify(token, JWT_SECRET);
+  } catch {
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
+
+  // Ensure user can only access their own photos
+  if (payload.userId !== req.params.userId) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
+  // Prevent path traversal
+  const filename = path.basename(req.params.filename);
+  const filePath = path.join(UPLOADS_DIR, req.params.userId, filename);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Photo not found" });
+  }
+
+  res.set({
+    "Content-Type": "image/jpeg",
+    "Cache-Control": "public, max-age=31536000, immutable",
+  });
+  res.sendFile(filePath);
+});
 
 // --- User helpers ---
 
