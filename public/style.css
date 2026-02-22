@@ -29,6 +29,95 @@
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Flatpickr theme overrides */
+.flatpickr-calendar {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.flatpickr-months .flatpickr-month {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+}
+
+.flatpickr-current-month input.cur-year {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+}
+
+.flatpickr-weekday {
+  background: var(--surface) !important;
+  color: var(--text-muted) !important;
+}
+
+.flatpickr-day {
+  color: var(--text) !important;
+  border-color: transparent !important;
+}
+
+.flatpickr-day:hover {
+  background: var(--surface-hover) !important;
+}
+
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+  color: var(--text-muted) !important;
+  opacity: 0.5;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange,
+.flatpickr-day.endRange:hover {
+  background: var(--accent) !important;
+  color: var(--accent-text) !important;
+  border-color: var(--accent) !important;
+}
+
+.flatpickr-day.today {
+  border-color: var(--accent) !important;
+}
+
+.flatpickr-day.today:hover {
+  background: var(--surface-hover) !important;
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+  fill: var(--text-muted) !important;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+  fill: var(--text) !important;
+}
+
+span.flatpickr-weekday {
+  background: var(--surface) !important;
+}
+
+.flatpickr-monthDropdown-months {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+}
+
+.numInputWrapper span {
+  border-color: var(--border) !important;
+}
+
+.numInputWrapper span:hover {
+  background: var(--surface-hover) !important;
+}
+
 [data-theme="light"] {
   --bg: #f5f3ef;
   --surface: #ffffff;
@@ -48,6 +137,11 @@
   --nav-bg-hover: rgba(0, 0, 0, 0.6);
   --nav-text: #fff;
   --shadow-card: rgba(0, 0, 0, 0.1);
+}
+
+/* Flatpickr light mode overrides */
+[data-theme="light"] .flatpickr-calendar {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
 }
 
 body {

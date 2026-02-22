@@ -576,6 +576,13 @@ document.addEventListener("keydown", (e) => {
 
 // --- Init ---
 
+// Initialize Flatpickr calendar
+flatpickr("#entry-date", {
+  dateFormat: "Y-m-d",
+  maxDate: todayStr(),
+  disableMobile: true,
+});
+
 render();
 
 // --- Offline / Online ---
