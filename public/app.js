@@ -60,10 +60,18 @@ const detailReplacePhotoInput = document.getElementById("detail-replace-photo-in
 const userGreeting = document.getElementById("user-greeting");
 const logoutBtn = document.getElementById("logout-btn");
 const offlineBanner = document.getElementById("offline-banner");
+const entriesOnlyCheckbox = document.getElementById("entries-only");
 
 let currentDetailId = null;
 let currentEntries = [];
 let currentCalendar = [];
+
+// Restore filter preference
+entriesOnlyCheckbox.checked = localStorage.getItem("entriesOnly") === "true";
+entriesOnlyCheckbox.addEventListener("change", () => {
+  localStorage.setItem("entriesOnly", entriesOnlyCheckbox.checked);
+  render();
+});
 
 // --- User greeting & logout ---
 
@@ -92,7 +100,10 @@ function formatDate(dateStr) {
 
 function todayStr() {
   const d = new Date();
-  return d.toISOString().split("T")[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 // --- API ---
@@ -161,15 +172,17 @@ async function render() {
     entryByDate[entry.date] = entry;
   }
 
-  // Date range: today down to the oldest entry
+  // Date range: today down to one month past the oldest entry
   const today = new Date(todayStr() + "T00:00:00");
   const dates = entries.map((e) => e.date);
-  const oldest = new Date(dates[dates.length - 1] + "T00:00:00");
+  const oldestEntry = new Date(dates[dates.length - 1] + "T00:00:00");
+  const oldest = new Date(oldestEntry);
+  oldest.setMonth(oldest.getMonth() - 1);
 
   const allCards = []; // { date, entry? } — used for detail nav
   const day = new Date(today);
   while (day >= oldest) {
-    const dateStr = day.toISOString().split("T")[0];
+    const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
     const entry = entryByDate[dateStr] || null;
     allCards.push({ date: dateStr, entry });
     day.setDate(day.getDate() - 1);
@@ -178,7 +191,11 @@ async function render() {
   // Store for prev/next navigation (includes empty slots)
   currentCalendar = allCards;
 
-  allCards.forEach(({ date, entry }) => {
+  const visibleCards = entriesOnlyCheckbox.checked
+    ? allCards.filter((c) => c.entry)
+    : allCards;
+
+  visibleCards.forEach(({ date, entry }) => {
     const card = document.createElement("div");
     card.className = entry ? "card" : "card card-empty";
     card.dataset.date = date;
