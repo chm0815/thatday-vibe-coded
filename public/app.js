@@ -61,10 +61,32 @@ const userGreeting = document.getElementById("user-greeting");
 const logoutBtn = document.getElementById("logout-btn");
 const offlineBanner = document.getElementById("offline-banner");
 const entriesOnlyCheckbox = document.getElementById("entries-only");
+const themeToggle = document.getElementById("theme-toggle");
 
 let currentDetailId = null;
 let currentEntries = [];
 let currentCalendar = [];
+
+// --- Theme ---
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  themeToggle.textContent = theme === "light" ? "\u263E" : "\u2600";
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) {
+    metaTheme.content = theme === "light" ? "#f5f3ef" : "#0f0f0f";
+  }
+}
+
+const savedTheme = localStorage.getItem("theme") || "dark";
+applyTheme(savedTheme);
+
+themeToggle.addEventListener("click", () => {
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  const next = current === "dark" ? "light" : "dark";
+  localStorage.setItem("theme", next);
+  applyTheme(next);
+});
 
 // Restore filter preference
 entriesOnlyCheckbox.checked = localStorage.getItem("entriesOnly") === "true";

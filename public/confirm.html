@@ -56,6 +56,13 @@
     </style>
   </head>
   <body>
+    <script>
+      // Apply saved theme before render to avoid flash
+      const t = localStorage.getItem("theme") || "dark";
+      document.documentElement.setAttribute("data-theme", t);
+      const m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = t === "light" ? "#f5f3ef" : "#0f0f0f";
+    </script>
     <div class="confirm-container">
       <h1>thatday</h1>
       <p class="subtitle">One photo. One headline. Every day.</p>

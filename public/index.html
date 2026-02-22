@@ -10,10 +10,18 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
   </head>
   <body>
+    <script>
+      // Apply saved theme before render to avoid flash
+      const t = localStorage.getItem("theme") || "dark";
+      document.documentElement.setAttribute("data-theme", t);
+      const m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = t === "light" ? "#f5f3ef" : "#0f0f0f";
+    </script>
     <div id="offline-banner" class="offline-banner" hidden>You are offline — viewing cached data</div>
     <header>
       <div class="header-top">
         <span id="user-greeting" class="user-greeting"></span>
+        <button id="theme-toggle" class="btn-theme" title="Toggle light/dark mode"></button>
         <button id="logout-btn" class="btn-logout">Log out</button>
       </div>
       <h1>thatday</h1>
