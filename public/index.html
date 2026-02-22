@@ -99,6 +99,18 @@
       <button id="detail-next" class="detail-nav detail-nav-right" title="Next">&#8250;</button>
     </div>
 
+    <!-- Confirm Dialog -->
+    <div id="confirm-overlay" class="modal-overlay" hidden>
+      <div class="modal confirm-modal">
+        <h2 id="confirm-title">Are you sure?</h2>
+        <p id="confirm-message" class="confirm-message"></p>
+        <div class="confirm-actions">
+          <button id="confirm-cancel" class="btn-secondary">Cancel</button>
+          <button id="confirm-ok" class="btn-danger">Delete</button>
+        </div>
+      </div>
+    </div>
+
     <script src="app.js"></script>
   </body>
 </html>

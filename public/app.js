@@ -62,6 +62,11 @@ const logoutBtn = document.getElementById("logout-btn");
 const offlineBanner = document.getElementById("offline-banner");
 const entriesOnlyCheckbox = document.getElementById("entries-only");
 const themeToggle = document.getElementById("theme-toggle");
+const confirmOverlay = document.getElementById("confirm-overlay");
+const confirmTitle = document.getElementById("confirm-title");
+const confirmMessage = document.getElementById("confirm-message");
+const confirmOk = document.getElementById("confirm-ok");
+const confirmCancel = document.getElementById("confirm-cancel");
 
 let currentDetailId = null;
 let currentEntries = [];
@@ -397,9 +402,44 @@ detailOverlay.addEventListener("click", (e) => {
 detailPrev.addEventListener("click", () => navigateDetail(-1));
 detailNext.addEventListener("click", () => navigateDetail(1));
 
+// --- Confirm dialog ---
+
+function showConfirm({ title, message, confirmLabel }) {
+  return new Promise((resolve) => {
+    confirmTitle.textContent = title || "Are you sure?";
+    confirmMessage.textContent = message || "";
+    confirmOk.textContent = confirmLabel || "Delete";
+    confirmOverlay.hidden = false;
+
+    function cleanup() {
+      confirmOverlay.hidden = true;
+      confirmOk.removeEventListener("click", onOk);
+      confirmCancel.removeEventListener("click", onCancel);
+      confirmOverlay.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKey);
+    }
+
+    function onOk() { cleanup(); resolve(true); }
+    function onCancel() { cleanup(); resolve(false); }
+    function onBackdrop(e) { if (e.target === confirmOverlay) { cleanup(); resolve(false); } }
+    function onKey(e) { if (e.key === "Escape") { cleanup(); resolve(false); } }
+
+    confirmOk.addEventListener("click", onOk);
+    confirmCancel.addEventListener("click", onCancel);
+    confirmOverlay.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKey);
+  });
+}
+
 detailDelete.addEventListener("click", async () => {
   if (!currentDetailId) return;
-  if (!confirm("Delete this entry? This cannot be undone.")) return;
+
+  const confirmed = await showConfirm({
+    title: "Delete entry",
+    message: "This entry will be permanently deleted. This cannot be undone.",
+    confirmLabel: "Delete",
+  });
+  if (!confirmed) return;
 
   await deleteEntry(currentDetailId);
   closeDetail();

@@ -611,6 +611,33 @@ form .btn-primary {
   color: var(--nav-text);
 }
 
+/* Confirm dialog */
+
+.confirm-modal {
+  max-width: 360px;
+  text-align: center;
+}
+
+.confirm-modal h2 {
+  margin-bottom: 0.6rem;
+}
+
+.confirm-message {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.confirm-actions button {
+  flex: 1;
+}
+
 /* Responsive */
 
 @media (max-width: 600px) {
