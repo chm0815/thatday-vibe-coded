@@ -19,6 +19,8 @@ Capture each day with a single photo and a short headline (max 300 characters). 
 - **Offline support** — works without internet via Service Worker
 - **Mobile-ready** — wrap with Capacitor for Android
 
+<img src="screenshots/thatday_screenshot.png" width="50%" alt="thatday screenshot">
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -92,4 +94,4 @@ npx cap run android
 
 This app was built with intuition, iteration, and a healthy disregard for best practices. No tests. No type safety. No部署 pipeline. Just vibes and functionality.
 
-Built with ☕ by Christoph Maurer
+Built by Christoph Maurer
