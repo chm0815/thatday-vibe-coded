@@ -217,7 +217,21 @@ async function render() {
     ? allCards.filter((c) => c.entry)
     : allCards;
 
+  let currentMonth = null;
+
   visibleCards.forEach(({ date, entry }) => {
+    // Insert month separator when the month changes
+    const month = date.slice(0, 7); // "YYYY-MM"
+    if (month !== currentMonth) {
+      currentMonth = month;
+      const d = new Date(date + "T00:00:00");
+      const label = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      const sep = document.createElement("div");
+      sep.className = "month-separator";
+      sep.innerHTML = `<span>${label}</span>`;
+      grid.appendChild(sep);
+    }
+
     const card = document.createElement("div");
     card.className = entry ? "card" : "card card-empty";
     card.dataset.date = date;
@@ -365,11 +379,9 @@ function openDetail(entry) {
 }
 
 function updateNavButtons() {
-  const idx = currentCalendar.findIndex(
-    (c) => c.entry && c.entry.id === currentDetailId
-  );
+  const idx = currentEntries.findIndex((e) => e.id === currentDetailId);
   detailPrev.disabled = idx <= 0;
-  detailNext.disabled = idx === -1 || idx >= currentCalendar.length - 1;
+  detailNext.disabled = idx === -1 || idx >= currentEntries.length - 1;
 }
 
 function closeDetail() {
@@ -494,20 +506,12 @@ detailHeadlineInput.addEventListener("keydown", (e) => {
 // --- Keyboard ---
 
 function navigateDetail(direction) {
-  if (!currentDetailId || currentCalendar.length === 0) return;
-  const idx = currentCalendar.findIndex(
-    (c) => c.entry && c.entry.id === currentDetailId
-  );
+  if (!currentDetailId || currentEntries.length === 0) return;
+  const idx = currentEntries.findIndex((e) => e.id === currentDetailId);
   if (idx === -1) return;
   const nextIdx = idx + direction;
-  if (nextIdx < 0 || nextIdx >= currentCalendar.length) return;
-  const next = currentCalendar[nextIdx];
-  if (next.entry) {
-    openDetail(next.entry);
-  } else {
-    closeDetail();
-    openAddModalForDate(next.date);
-  }
+  if (nextIdx < 0 || nextIdx >= currentEntries.length) return;
+  openDetail(currentEntries[nextIdx]);
 }
 
 document.addEventListener("keydown", (e) => {
