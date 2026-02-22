@@ -1,4 +1,4 @@
-const CACHE_NAME = "thatday-v3";
+const CACHE_NAME = "thatday-v5";
 const STATIC_ASSETS = [
   "/",
   "/index.html",
@@ -6,6 +6,8 @@ const STATIC_ASSETS = [
   "/confirm.html",
   "/style.css",
   "/app.js",
+  "/dist/flatpickr.min.css",
+  "/dist/flatpickr.min.js",
 ];
 
 // Install: pre-cache the app shell
