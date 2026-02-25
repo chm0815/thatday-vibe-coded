@@ -60,8 +60,18 @@
             required
           />
 
-          <label for="entry-photo">Photo</label>
-          <input type="file" id="entry-photo" accept="image/*" />
+          <label>Photo</label>
+          <div class="photo-buttons">
+            <button type="button" id="photo-camera-btn" class="btn-secondary photo-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Foto aufnehmen
+            </button>
+            <button type="button" id="photo-gallery-btn" class="btn-secondary photo-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              Aus Galerie
+            </button>
+          </div>
+          <input type="file" id="entry-photo" accept="image/*" hidden />
           <div id="photo-preview" class="photo-preview" hidden>
             <img id="preview-img" src="" alt="Preview" />
           </div>
@@ -80,11 +90,29 @@
         <img id="detail-img" src="" alt="" class="detail-img" />
         <div id="detail-photo-upload" class="detail-photo-upload" hidden>
           <p>No photo yet</p>
-          <button id="detail-add-photo-btn" class="btn-primary" type="button">Add Photo</button>
+          <div class="photo-buttons">
+            <button id="detail-add-camera-btn" class="btn-secondary photo-btn" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Foto aufnehmen
+            </button>
+            <button id="detail-add-gallery-btn" class="btn-secondary photo-btn" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              Aus Galerie
+            </button>
+          </div>
           <input type="file" id="detail-photo-input" accept="image/*" hidden />
         </div>
         <div class="detail-photo-actions" id="detail-photo-actions" hidden>
-          <button id="detail-replace-photo-btn" class="btn-secondary" type="button">Replace Photo</button>
+          <div class="photo-buttons">
+            <button id="detail-replace-camera-btn" class="btn-secondary photo-btn" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Foto aufnehmen
+            </button>
+            <button id="detail-replace-gallery-btn" class="btn-secondary photo-btn" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              Aus Galerie
+            </button>
+          </div>
           <input type="file" id="detail-replace-photo-input" accept="image/*" hidden />
         </div>
         <p id="detail-photo-error" class="form-error detail-photo-error" hidden></p>
@@ -98,6 +126,35 @@
         </div>
       </div>
       <button id="detail-next" class="detail-nav detail-nav-right" title="Next">&#8250;</button>
+    </div>
+
+    <!-- Camera Capture Modal -->
+    <div id="camera-overlay" class="modal-overlay" hidden>
+      <div class="modal camera-modal">
+        <button id="camera-close" class="modal-close">&times;</button>
+        <h2>Foto aufnehmen</h2>
+        <div class="camera-viewfinder">
+          <video id="camera-video" autoplay playsinline></video>
+          <canvas id="camera-canvas" hidden></canvas>
+          <img id="camera-preview" hidden alt="Captured photo" />
+          <p id="camera-error" class="form-error" hidden></p>
+        </div>
+        <div class="camera-controls">
+          <div id="camera-live-controls" class="camera-btn-row">
+            <button type="button" id="camera-switch-btn" class="btn-secondary camera-ctrl-btn" title="Kamera wechseln">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </button>
+            <button type="button" id="camera-capture-btn" class="btn-primary camera-shutter">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+            </button>
+            <div class="camera-ctrl-spacer"></div>
+          </div>
+          <div id="camera-review-controls" class="camera-btn-row" hidden>
+            <button type="button" id="camera-retake-btn" class="btn-secondary">Nochmal</button>
+            <button type="button" id="camera-use-btn" class="btn-primary">Verwenden</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Confirm Dialog -->

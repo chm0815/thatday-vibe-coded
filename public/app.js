@@ -36,6 +36,8 @@ const entryId = document.getElementById("entry-id");
 const entryDate = document.getElementById("entry-date");
 const entryHeadline = document.getElementById("entry-headline");
 const entryPhoto = document.getElementById("entry-photo");
+const photoCameraBtn = document.getElementById("photo-camera-btn");
+const photoGalleryBtn = document.getElementById("photo-gallery-btn");
 const charCount = document.getElementById("char-count");
 const photoPreview = document.getElementById("photo-preview");
 const previewImg = document.getElementById("preview-img");
@@ -45,7 +47,8 @@ const detailOverlay = document.getElementById("detail-overlay");
 const detailClose = document.getElementById("detail-close");
 const detailImg = document.getElementById("detail-img");
 const detailPhotoUpload = document.getElementById("detail-photo-upload");
-const detailAddPhotoBtn = document.getElementById("detail-add-photo-btn");
+const detailAddCameraBtn = document.getElementById("detail-add-camera-btn");
+const detailAddGalleryBtn = document.getElementById("detail-add-gallery-btn");
 const detailPhotoInput = document.getElementById("detail-photo-input");
 const detailHeadline = document.getElementById("detail-headline");
 const detailHeadlineInput = document.getElementById("detail-headline-input");
@@ -55,7 +58,8 @@ const detailPrev = document.getElementById("detail-prev");
 const detailNext = document.getElementById("detail-next");
 const detailPhotoError = document.getElementById("detail-photo-error");
 const detailPhotoActions = document.getElementById("detail-photo-actions");
-const detailReplacePhotoBtn = document.getElementById("detail-replace-photo-btn");
+const detailReplaceCameraBtn = document.getElementById("detail-replace-camera-btn");
+const detailReplaceGalleryBtn = document.getElementById("detail-replace-gallery-btn");
 const detailReplacePhotoInput = document.getElementById("detail-replace-photo-input");
 const userGreeting = document.getElementById("user-greeting");
 const logoutBtn = document.getElementById("logout-btn");
@@ -286,6 +290,7 @@ function openAddModal() {
   entryDate.max = todayStr();
   entryHeadline.value = "";
   entryPhoto.value = "";
+  cameraFile = null;
   entryPhoto.required = false;
   photoPreview.hidden = true;
   formError.hidden = true;
@@ -316,10 +321,157 @@ entryHeadline.addEventListener("input", () => {
   charCount.textContent = `(${len} / 300)`;
 });
 
-// Photo preview
+// --- Camera Capture Modal ---
+
+const cameraOverlay = document.getElementById("camera-overlay");
+const cameraClose = document.getElementById("camera-close");
+const cameraVideo = document.getElementById("camera-video");
+const cameraCanvas = document.getElementById("camera-canvas");
+const cameraPreviewImg = document.getElementById("camera-preview");
+const cameraError = document.getElementById("camera-error");
+const cameraCaptureBtn = document.getElementById("camera-capture-btn");
+const cameraSwitchBtn = document.getElementById("camera-switch-btn");
+const cameraRetakeBtn = document.getElementById("camera-retake-btn");
+const cameraUseBtn = document.getElementById("camera-use-btn");
+const cameraLiveControls = document.getElementById("camera-live-controls");
+const cameraReviewControls = document.getElementById("camera-review-controls");
+
+let cameraStream = null;
+let cameraFacingMode = "environment"; // start with rear camera
+let cameraCapturedBlob = null;
+let cameraResolve = null; // promise resolve for the captured file
+
+/**
+ * Open the camera modal and return a Promise that resolves with a File
+ * (the captured photo) or null if the user cancels.
+ */
+function openCamera() {
+  return new Promise((resolve) => {
+    cameraResolve = resolve;
+    cameraCapturedBlob = null;
+    cameraPreviewImg.hidden = true;
+    cameraPreviewImg.src = "";
+    cameraVideo.hidden = false;
+    cameraError.hidden = true;
+    cameraLiveControls.hidden = false;
+    cameraReviewControls.hidden = true;
+    cameraOverlay.hidden = false;
+    startCameraStream();
+  });
+}
+
+async function startCameraStream() {
+  // Stop any existing stream
+  stopCameraStream();
+
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: cameraFacingMode, width: { ideal: 1920 }, height: { ideal: 1440 } },
+      audio: false,
+    });
+    cameraVideo.srcObject = cameraStream;
+    cameraVideo.hidden = false;
+    cameraError.hidden = true;
+  } catch (err) {
+    cameraVideo.hidden = true;
+    cameraError.textContent = "Kamera konnte nicht gestartet werden. Bitte Berechtigung erteilen.";
+    cameraError.hidden = false;
+  }
+}
+
+function stopCameraStream() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach((t) => t.stop());
+    cameraStream = null;
+  }
+  cameraVideo.srcObject = null;
+}
+
+function closeCamera(result) {
+  stopCameraStream();
+  cameraOverlay.hidden = true;
+  if (cameraResolve) {
+    cameraResolve(result || null);
+    cameraResolve = null;
+  }
+}
+
+cameraCaptureBtn.addEventListener("click", () => {
+  if (!cameraStream) return;
+  const track = cameraStream.getVideoTracks()[0];
+  const settings = track.getSettings();
+  const w = settings.width || cameraVideo.videoWidth;
+  const h = settings.height || cameraVideo.videoHeight;
+
+  cameraCanvas.width = w;
+  cameraCanvas.height = h;
+  const ctx = cameraCanvas.getContext("2d");
+  ctx.drawImage(cameraVideo, 0, 0, w, h);
+
+  // Show preview
+  const dataUrl = cameraCanvas.toDataURL("image/jpeg", 0.92);
+  cameraPreviewImg.src = dataUrl;
+  cameraPreviewImg.hidden = false;
+  cameraVideo.hidden = true;
+  cameraLiveControls.hidden = true;
+  cameraReviewControls.hidden = false;
+
+  // Convert to blob
+  cameraCanvas.toBlob((blob) => {
+    cameraCapturedBlob = blob;
+  }, "image/jpeg", 0.92);
+});
+
+cameraSwitchBtn.addEventListener("click", () => {
+  cameraFacingMode = cameraFacingMode === "environment" ? "user" : "environment";
+  startCameraStream();
+});
+
+cameraRetakeBtn.addEventListener("click", () => {
+  cameraCapturedBlob = null;
+  cameraPreviewImg.hidden = true;
+  cameraPreviewImg.src = "";
+  cameraVideo.hidden = false;
+  cameraLiveControls.hidden = false;
+  cameraReviewControls.hidden = true;
+  startCameraStream();
+});
+
+cameraUseBtn.addEventListener("click", () => {
+  if (!cameraCapturedBlob) return;
+  const file = new File([cameraCapturedBlob], "camera-photo.jpg", { type: "image/jpeg" });
+  closeCamera(file);
+});
+
+cameraClose.addEventListener("click", () => closeCamera(null));
+cameraOverlay.addEventListener("click", (e) => {
+  if (e.target === cameraOverlay) closeCamera(null);
+});
+
+// Track camera-captured file separately for the Add modal
+let cameraFile = null;
+
+// Photo buttons — camera vs gallery (Add modal)
+photoCameraBtn.addEventListener("click", async () => {
+  const file = await openCamera();
+  if (file) {
+    cameraFile = file;
+    entryPhoto.value = ""; // clear gallery selection
+    const url = URL.createObjectURL(file);
+    previewImg.src = url;
+    photoPreview.hidden = false;
+  }
+});
+
+photoGalleryBtn.addEventListener("click", () => {
+  entryPhoto.click();
+});
+
+// Photo preview from gallery
 entryPhoto.addEventListener("change", () => {
   const file = entryPhoto.files[0];
   if (file) {
+    cameraFile = null; // clear camera selection
     const url = URL.createObjectURL(file);
     previewImg.src = url;
     photoPreview.hidden = false;
@@ -339,8 +491,9 @@ entryForm.addEventListener("submit", async (e) => {
   formData.append("date", entryDate.value);
   formData.append("headline", entryHeadline.value);
 
-  if (entryPhoto.files[0]) {
-    formData.append("photo", entryPhoto.files[0]);
+  const photoFile = entryPhoto.files[0] || cameraFile;
+  if (photoFile) {
+    formData.append("photo", photoFile);
   }
 
   try {
@@ -371,10 +524,6 @@ function openDetail(entry) {
   detailPhotoInput.value = "";
   detailReplacePhotoInput.value = "";
   detailPhotoError.hidden = true;
-  detailReplacePhotoBtn.disabled = false;
-  detailReplacePhotoBtn.textContent = "Replace Photo";
-  detailAddPhotoBtn.disabled = false;
-  detailAddPhotoBtn.textContent = "Add Photo";
   detailHeadline.textContent = entry.headline;
   detailHeadline.hidden = false;
   detailHeadlineInput.hidden = true;
@@ -446,32 +595,44 @@ detailDelete.addEventListener("click", async () => {
   await render();
 });
 
-// Photo upload in detail view (add)
-detailAddPhotoBtn.addEventListener("click", () => {
+// Photo upload in detail view (add) — camera or gallery
+detailAddCameraBtn.addEventListener("click", async () => {
+  const file = await openCamera();
+  if (file && currentDetailId) {
+    await uploadDetailPhoto(file);
+  }
+});
+
+detailAddGalleryBtn.addEventListener("click", () => {
   detailPhotoInput.click();
 });
 
 detailPhotoInput.addEventListener("change", async () => {
   const file = detailPhotoInput.files[0];
   if (!file || !currentDetailId) return;
-  await uploadDetailPhoto(file, detailAddPhotoBtn, "Add Photo");
+  await uploadDetailPhoto(file);
 });
 
-// Photo replace in detail view
-detailReplacePhotoBtn.addEventListener("click", () => {
+// Photo replace in detail view — camera or gallery
+detailReplaceCameraBtn.addEventListener("click", async () => {
+  const file = await openCamera();
+  if (file && currentDetailId) {
+    await uploadDetailPhoto(file);
+  }
+});
+
+detailReplaceGalleryBtn.addEventListener("click", () => {
   detailReplacePhotoInput.click();
 });
 
 detailReplacePhotoInput.addEventListener("change", async () => {
   const file = detailReplacePhotoInput.files[0];
   if (!file || !currentDetailId) return;
-  await uploadDetailPhoto(file, detailReplacePhotoBtn, "Replace Photo");
+  await uploadDetailPhoto(file);
 });
 
-async function uploadDetailPhoto(file, btn, label) {
+async function uploadDetailPhoto(file) {
   detailPhotoError.hidden = true;
-  btn.disabled = true;
-  btn.textContent = "Uploading...";
 
   const formData = new FormData();
   formData.append("photo", file);
@@ -499,9 +660,6 @@ async function uploadDetailPhoto(file, btn, label) {
   } catch (err) {
     detailPhotoError.textContent = err.message;
     detailPhotoError.hidden = false;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = label;
   }
 }
 
@@ -556,7 +714,8 @@ function navigateDetail(direction) {
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    if (!detailOverlay.hidden) closeDetail();
+    if (!cameraOverlay.hidden) closeCamera(null);
+    else if (!detailOverlay.hidden) closeDetail();
     else if (!modalOverlay.hidden) closeAddModal();
     return;
   }
