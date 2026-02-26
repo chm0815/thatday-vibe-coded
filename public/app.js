@@ -46,6 +46,8 @@ const submitBtn = document.getElementById("submit-btn");
 const detailOverlay = document.getElementById("detail-overlay");
 const detailClose = document.getElementById("detail-close");
 const detailImg = document.getElementById("detail-img");
+const detailImgContainer = document.getElementById("detail-img-container");
+const magnifier = document.getElementById("magnifier");
 const detailPhotoUpload = document.getElementById("detail-photo-upload");
 const detailAddCameraBtn = document.getElementById("detail-add-camera-btn");
 const detailAddGalleryBtn = document.getElementById("detail-add-gallery-btn");
@@ -519,6 +521,8 @@ function openDetail(entry) {
   detailImg.src = entry.photo ? photoUrl(entry.photo) : "";
   detailImg.alt = entry.headline;
   detailImg.hidden = !entry.photo;
+  detailImgContainer.hidden = !entry.photo;
+  magnifier.hidden = true;
   detailPhotoUpload.hidden = !!entry.photo;
   detailPhotoActions.hidden = !entry.photo;
   detailPhotoInput.value = "";
@@ -550,6 +554,132 @@ detailOverlay.addEventListener("click", (e) => {
 
 detailPrev.addEventListener("click", () => navigateDetail(-1));
 detailNext.addEventListener("click", () => navigateDetail(1));
+
+// --- Magnifying Glass ---
+
+const MAGNIFIER_SIZE = 150;  // matches CSS width/height
+const ZOOM_LEVEL = 2.5;      // how much to zoom in
+
+function updateMagnifier(clientX, clientY) {
+  const rect = detailImg.getBoundingClientRect();
+
+  // Cursor position relative to the image element
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+
+  // Bail if cursor is outside the image bounds
+  if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+    magnifier.hidden = true;
+    return;
+  }
+
+  magnifier.hidden = false;
+
+  // Position the magnifier centered on the cursor (relative to container)
+  const containerRect = detailImgContainer.getBoundingClientRect();
+  magnifier.style.left = (clientX - containerRect.left) + "px";
+  magnifier.style.top = (clientY - containerRect.top) + "px";
+
+  // The image may be letterboxed (object-fit: contain), so we need
+  // to find the actual rendered image area within the <img> element.
+  const naturalW = detailImg.naturalWidth;
+  const naturalH = detailImg.naturalHeight;
+
+  if (!naturalW || !naturalH) return;
+
+  const imgAspect = naturalW / naturalH;
+  const elemAspect = rect.width / rect.height;
+
+  let renderedW, renderedH, offsetX, offsetY;
+
+  if (imgAspect > elemAspect) {
+    // Image is wider — letterboxed top/bottom
+    renderedW = rect.width;
+    renderedH = rect.width / imgAspect;
+    offsetX = 0;
+    offsetY = (rect.height - renderedH) / 2;
+  } else {
+    // Image is taller — pillarboxed left/right
+    renderedH = rect.height;
+    renderedW = rect.height * imgAspect;
+    offsetX = (rect.width - renderedW) / 2;
+    offsetY = 0;
+  }
+
+  // Cursor position within the actual rendered image (0..1)
+  const imgX = (x - offsetX) / renderedW;
+  const imgY = (y - offsetY) / renderedH;
+
+  // If cursor is in the letterbox/pillarbox area, hide magnifier
+  if (imgX < 0 || imgX > 1 || imgY < 0 || imgY > 1) {
+    magnifier.hidden = true;
+    return;
+  }
+
+  // Background: the same image, scaled up by ZOOM_LEVEL
+  const bgW = renderedW * ZOOM_LEVEL;
+  const bgH = renderedH * ZOOM_LEVEL;
+
+  // Background position: center the zoomed area on the cursor
+  const bgX = -(imgX * bgW) + (MAGNIFIER_SIZE / 2);
+  const bgY = -(imgY * bgH) + (MAGNIFIER_SIZE / 2);
+
+  magnifier.style.backgroundImage = `url('${detailImg.src}')`;
+  magnifier.style.backgroundSize = `${bgW}px ${bgH}px`;
+  magnifier.style.backgroundPosition = `${bgX}px ${bgY}px`;
+}
+
+// Mouse events
+detailImgContainer.addEventListener("mousemove", (e) => {
+  updateMagnifier(e.clientX, e.clientY);
+});
+
+detailImgContainer.addEventListener("mouseleave", () => {
+  magnifier.hidden = true;
+});
+
+// Touch events (long-press to activate, move to pan)
+let touchActive = false;
+let longPressTimer = null;
+
+detailImgContainer.addEventListener("touchstart", (e) => {
+  if (e.touches.length !== 1) return;
+  const touch = e.touches[0];
+  longPressTimer = setTimeout(() => {
+    touchActive = true;
+    updateMagnifier(touch.clientX, touch.clientY);
+    e.preventDefault();
+  }, 300);
+}, { passive: false });
+
+detailImgContainer.addEventListener("touchmove", (e) => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+  if (!touchActive) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  updateMagnifier(touch.clientX, touch.clientY);
+}, { passive: false });
+
+detailImgContainer.addEventListener("touchend", () => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+  touchActive = false;
+  magnifier.hidden = true;
+});
+
+detailImgContainer.addEventListener("touchcancel", () => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+  touchActive = false;
+  magnifier.hidden = true;
+});
 
 // --- Confirm dialog ---
 
@@ -654,6 +784,7 @@ async function uploadDetailPhoto(file) {
     const updated = await res.json();
     detailImg.src = photoUrl(updated.photo);
     detailImg.hidden = false;
+    detailImgContainer.hidden = false;
     detailPhotoUpload.hidden = true;
     detailPhotoActions.hidden = false;
     await render();

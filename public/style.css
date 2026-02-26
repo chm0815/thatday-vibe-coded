@@ -584,6 +584,16 @@ form .btn-primary {
   overflow: hidden;
 }
 
+.detail-img-container {
+  position: relative;
+  background: var(--photo-bg);
+  cursor: crosshair;
+}
+
+.detail-img-container[hidden] {
+  display: none;
+}
+
 .detail-img {
   width: 100%;
   max-height: 60vh;
@@ -593,6 +603,25 @@ form .btn-primary {
 }
 
 .detail-img[hidden] {
+  display: none;
+}
+
+/* Magnifying glass */
+
+.magnifier {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255,255,255,0.1);
+  pointer-events: none;
+  background-repeat: no-repeat;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+}
+
+.magnifier[hidden] {
   display: none;
 }
 
