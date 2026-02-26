@@ -4,6 +4,8 @@
 
 A personal daily journal app built with love and 100% vibe-coding.
 
+**[Live Demo](https://thatday-vibe-coded.onrender.com/)**
+
 ## What it does
 
 Capture each day with a single photo and a short headline (max 300 characters). Browse your memories in a beautiful photo-tile grid, search through your entries, and view them in a slideshow. Works offline as a Progressive Web App (PWA), and can be installed as a native app on Android.
