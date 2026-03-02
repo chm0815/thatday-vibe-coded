@@ -63,6 +63,8 @@ const detailPhotoActions = document.getElementById("detail-photo-actions");
 const detailReplaceCameraBtn = document.getElementById("detail-replace-camera-btn");
 const detailReplaceGalleryBtn = document.getElementById("detail-replace-gallery-btn");
 const detailReplacePhotoInput = document.getElementById("detail-replace-photo-input");
+const detailOnThisDay = document.getElementById("detail-onthisday");
+const detailOnThisDayLabel = document.getElementById("detail-onthisday-label");
 const userGreeting = document.getElementById("user-greeting");
 const logoutBtn = document.getElementById("logout-btn");
 const offlineBanner = document.getElementById("offline-banner");
@@ -534,6 +536,7 @@ function openDetail(entry) {
   detailDate.textContent = formatDate(entry.date);
   detailOverlay.hidden = false;
   updateNavButtons();
+  updateOnThisDayButton(entry.date);
 }
 
 function updateNavButtons() {
@@ -554,6 +557,48 @@ detailOverlay.addEventListener("click", (e) => {
 
 detailPrev.addEventListener("click", () => navigateDetail(-1));
 detailNext.addEventListener("click", () => navigateDetail(1));
+
+// --- On This Day ---
+
+function getOnThisDayEntries(currentDate) {
+  // currentDate is "YYYY-MM-DD"
+  const monthDay = currentDate.slice(5); // "MM-DD"
+  return currentEntries.filter(
+    (e) => e.date.slice(5) === monthDay && e.date !== currentDate
+  ).sort((a, b) => b.date.localeCompare(a.date)); // newest first
+}
+
+function updateOnThisDayButton(currentDate) {
+  const matches = getOnThisDayEntries(currentDate);
+  if (matches.length === 0) {
+    detailOnThisDay.hidden = true;
+    return;
+  }
+  detailOnThisDay.hidden = false;
+  const years = matches.map((e) => e.date.slice(0, 4));
+  detailOnThisDayLabel.textContent = matches.length === 1
+    ? `On This Day (${years[0]})`
+    : `On This Day (${matches.length} years)`;
+}
+
+detailOnThisDay.addEventListener("click", () => {
+  if (!currentDetailId) return;
+  const current = currentEntries.find((e) => e.id === currentDetailId);
+  if (!current) return;
+  const matches = getOnThisDayEntries(current.date);
+  if (matches.length === 0) return;
+  // Find the next year to show: cycle through matches
+  // If current entry is already one of the "on this day" entries,
+  // find the next one in the cycle
+  const allSameDay = [
+    ...currentEntries.filter(
+      (e) => e.date.slice(5) === current.date.slice(5)
+    )
+  ].sort((a, b) => b.date.localeCompare(a.date)); // newest first
+  const currentIdx = allSameDay.findIndex((e) => e.id === currentDetailId);
+  const nextIdx = (currentIdx + 1) % allSameDay.length;
+  openDetail(allSameDay[nextIdx]);
+});
 
 // --- Magnifying Glass ---
 
