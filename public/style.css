@@ -734,21 +734,56 @@ form .btn-primary {
 }
 
 .detail-info {
-  padding: 1.2rem 1.5rem 0.8rem;
+  padding: 1.2rem 2.5rem 0.8rem 1.5rem;
 }
 
 .detail-info h2 {
   font-size: 1.15rem;
   margin-bottom: 0.3rem;
+  color: var(--accent);
 }
 
 .detail-info h2.editable {
   cursor: pointer;
-  border-bottom: 1px dashed var(--border);
+  border-bottom: 1px dashed transparent;
   padding-bottom: 0.2rem;
 }
 
 .detail-info h2.editable:hover {
+  border-bottom-color: var(--accent);
+}
+
+.detail-date-input {
+  width: 100%;
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-family: var(--font);
+  color: var(--accent);
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.detail-date-input:focus {
+  outline: none;
+}
+
+.detail-date-input[hidden] {
+  display: none;
+}
+
+.detail-info p.editable {
+  cursor: pointer;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 0.2rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+
+.detail-info p.editable:hover {
   border-bottom-color: var(--accent);
 }
 
@@ -773,48 +808,12 @@ form .btn-primary {
   display: none;
 }
 
-.detail-date {
-  color: var(--accent);
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
 .detail-actions {
   padding: 0 1.5rem 1.2rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
-}
-
-.detail-actions > :nth-child(2) {
-  justify-self: center;
-}
-
-.detail-actions > :last-child {
-  justify-self: end;
-}
-
-.detail-actions .btn-danger,
-.detail-actions .btn-ok {
-  width: 5.5rem;
-  text-align: center;
-}
-
-.btn-ok {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.btn-ok:hover {
-  opacity: 0.85;
 }
 
 .btn-onthisday {

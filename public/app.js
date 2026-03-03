@@ -59,6 +59,7 @@ const detailPhotoInput = document.getElementById("detail-photo-input");
 const detailHeadline = document.getElementById("detail-headline");
 const detailHeadlineInput = document.getElementById("detail-headline-input");
 const detailDate = document.getElementById("detail-date");
+const detailDateInput = document.getElementById("detail-date-input");
 const detailDelete = document.getElementById("detail-delete");
 const detailPrev = document.getElementById("detail-prev");
 const detailNext = document.getElementById("detail-next");
@@ -94,6 +95,7 @@ const confirmOk = document.getElementById("confirm-ok");
 const confirmCancel = document.getElementById("confirm-cancel");
 
 let currentDetailId = null;
+let currentDetailDate = null;
 let currentEntries = [];
 let currentCalendar = [];
 
@@ -591,10 +593,13 @@ function openDetail(entry) {
   detailVideoInput.value = "";
   detailReplaceVideoInput.value = "";
 
+  currentDetailDate = entry.date;
+  detailDate.textContent = formatDate(entry.date);
+  detailDate.hidden = false;
+  detailDateInput.hidden = true;
   detailHeadline.textContent = entry.headline;
   detailHeadline.hidden = false;
   detailHeadlineInput.hidden = true;
-  detailDate.textContent = formatDate(entry.date);
   detailOverlay.hidden = false;
   updateNavButtons();
   updateOnThisDayButton(entry.date);
@@ -614,7 +619,6 @@ function closeDetail() {
 }
 
 detailClose.addEventListener("click", closeDetail);
-document.getElementById("detail-ok").addEventListener("click", closeDetail);
 detailOverlay.addEventListener("click", (e) => {
   if (e.target === detailOverlay) closeDetail();
 });
@@ -1029,6 +1033,42 @@ detailHeadlineInput.addEventListener("keydown", (e) => {
   }
 });
 
+// Inline date editing
+const detailDatePicker = flatpickr(detailDateInput, {
+  dateFormat: "Y-m-d",
+  disableMobile: true,
+  onChange: async function (selectedDates, dateStr) {
+    if (!dateStr || dateStr === currentDetailDate) {
+      detailDateInput.hidden = true;
+      detailDate.hidden = false;
+      return;
+    }
+    const res = await updateEntry(currentDetailId, { date: dateStr });
+    if (res.ok) {
+      currentDetailDate = dateStr;
+      detailDate.textContent = formatDate(dateStr);
+      await render();
+      updateOnThisDayButton(dateStr);
+    } else {
+      const err = await res.json();
+      alert(err.error || "Could not change date");
+    }
+    detailDateInput.hidden = true;
+    detailDate.hidden = false;
+  },
+  onClose: function () {
+    detailDateInput.hidden = true;
+    detailDate.hidden = false;
+  },
+});
+
+detailDate.addEventListener("click", () => {
+  detailDate.hidden = true;
+  detailDateInput.hidden = false;
+  detailDatePicker.setDate(currentDetailDate, false);
+  detailDatePicker.open();
+});
+
 // --- Keyboard ---
 
 function navigateDetail(direction) {
@@ -1042,6 +1082,10 @@ function navigateDetail(direction) {
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
+    if (detailDatePicker.isOpen) {
+      detailDatePicker.close();
+      return;
+    }
     if (!cameraOverlay.hidden) closeCamera(null);
     else if (!detailOverlay.hidden) closeDetail();
     else if (!modalOverlay.hidden) closeAddModal();

@@ -525,6 +525,24 @@ app.put(
       return res.status(404).json({ error: "Entry not found" });
     }
 
+    if (req.body.date !== undefined) {
+      const newDate = req.body.date;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+        return res.status(400).json({ error: "Invalid date format" });
+      }
+      if (newDate !== entry.date) {
+        const conflict = entries.find(
+          (e) => e.date === newDate && e.id !== entry.id
+        );
+        if (conflict) {
+          return res
+            .status(409)
+            .json({ error: "An entry for this date already exists" });
+        }
+        entry.date = newDate;
+      }
+    }
+
     if (req.body.headline !== undefined) {
       if (req.body.headline.length > 300) {
         return res
