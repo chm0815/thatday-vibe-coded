@@ -56,6 +56,35 @@ const upload = multer({
   },
 });
 
+// Multer config for video uploads — disk storage, 50 MB limit
+const videoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = /\.(mp4|mov|webm|avi|mkv)$/i;
+    if (allowed.test(path.extname(file.originalname))) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only video files are allowed (mp4, mov, webm, avi, mkv)"));
+    }
+  },
+});
+
+// Combined upload for entries that accept both photo and video
+const mediaUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const imageAllowed = /\.(jpg|jpeg|png|gif|webp)$/i;
+    const videoAllowed = /\.(mp4|mov|webm|avi|mkv)$/i;
+    if (imageAllowed.test(path.extname(file.originalname)) || videoAllowed.test(path.extname(file.originalname))) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image (jpg, png, gif, webp) and video (mp4, mov, webm) files are allowed"));
+    }
+  },
+});
+
 const MAX_BYTES = 500 * 1024; // 500 KB
 
 /**
@@ -107,6 +136,23 @@ async function processPhoto(buffer, userId) {
   return relativePath;
 }
 
+/**
+ * Save an uploaded video buffer to uploads/<userId>/ and return the relative path.
+ * Videos are stored as-is (no transcoding).
+ */
+function saveVideo(buffer, originalname, userId) {
+  const userUploadsDir = path.join(UPLOADS_DIR, userId);
+  fs.mkdirSync(userUploadsDir, { recursive: true });
+
+  const ext = path.extname(originalname).toLowerCase() || ".mp4";
+  const filename = `${uuidv4()}${ext}`;
+  const relativePath = `${userId}/${filename}`;
+  const outputPath = path.join(UPLOADS_DIR, relativePath);
+
+  fs.writeFileSync(outputPath, buffer);
+  return relativePath;
+}
+
 // --- Middleware ---
 
 app.use(express.json());
@@ -141,11 +187,27 @@ app.get("/uploads/:userId/:filename", (req, res) => {
   const filePath = path.join(UPLOADS_DIR, req.params.userId, filename);
 
   if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: "Photo not found" });
+    return res.status(404).json({ error: "File not found" });
   }
 
+  // Determine content type from extension
+  const ext = path.extname(filename).toLowerCase();
+  const mimeTypes = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".mp4": "video/mp4",
+    ".mov": "video/quicktime",
+    ".webm": "video/webm",
+    ".avi": "video/x-msvideo",
+    ".mkv": "video/x-matroska",
+  };
+  const contentType = mimeTypes[ext] || "application/octet-stream";
+
   res.set({
-    "Content-Type": "image/jpeg",
+    "Content-Type": contentType,
     "Cache-Control": "public, max-age=31536000, immutable",
   });
   res.sendFile(filePath);
@@ -357,7 +419,10 @@ app.get("/api/entries", authenticate, (req, res) => {
 app.post(
   "/api/entries",
   authenticate,
-  upload.single("photo"),
+  mediaUpload.fields([
+    { name: "photo", maxCount: 1 },
+    { name: "video", maxCount: 1 },
+  ]),
   async (req, res) => {
     const { headline, date } = req.body;
 
@@ -382,8 +447,14 @@ app.post(
     }
 
     let photo = null;
-    if (req.file) {
-      photo = await processPhoto(req.file.buffer, req.userId);
+    if (req.files && req.files.photo && req.files.photo[0]) {
+      photo = await processPhoto(req.files.photo[0].buffer, req.userId);
+    }
+
+    let video = null;
+    if (req.files && req.files.video && req.files.video[0]) {
+      const vf = req.files.video[0];
+      video = saveVideo(vf.buffer, vf.originalname, req.userId);
     }
 
     const entry = {
@@ -391,6 +462,7 @@ app.post(
       date,
       headline,
       photo,
+      video,
       createdAt: new Date().toISOString(),
     };
 
@@ -419,6 +491,13 @@ app.delete("/api/entries/:id", authenticate, (req, res) => {
     }
   }
 
+  if (removed.video) {
+    const videoPath = path.join(UPLOADS_DIR, removed.video);
+    if (fs.existsSync(videoPath)) {
+      fs.unlinkSync(videoPath);
+    }
+  }
+
   writeEntries(req.userId, entries);
   res.json({ success: true });
 });
@@ -430,7 +509,10 @@ app.put(
   (req, res, next) => {
     const contentType = req.headers["content-type"] || "";
     if (contentType.includes("multipart/form-data")) {
-      upload.single("photo")(req, res, next);
+      mediaUpload.fields([
+        { name: "photo", maxCount: 1 },
+        { name: "video", maxCount: 1 },
+      ])(req, res, next);
     } else {
       next();
     }
@@ -452,14 +534,36 @@ app.put(
       entry.headline = req.body.headline;
     }
 
-    if (req.file) {
+    if (req.files && req.files.photo && req.files.photo[0]) {
       if (entry.photo) {
         const oldPhotoPath = path.join(UPLOADS_DIR, entry.photo);
         if (fs.existsSync(oldPhotoPath)) {
           fs.unlinkSync(oldPhotoPath);
         }
       }
-      entry.photo = await processPhoto(req.file.buffer, req.userId);
+      entry.photo = await processPhoto(req.files.photo[0].buffer, req.userId);
+    }
+
+    if (req.files && req.files.video && req.files.video[0]) {
+      if (entry.video) {
+        const oldVideoPath = path.join(UPLOADS_DIR, entry.video);
+        if (fs.existsSync(oldVideoPath)) {
+          fs.unlinkSync(oldVideoPath);
+        }
+      }
+      const vf = req.files.video[0];
+      entry.video = saveVideo(vf.buffer, vf.originalname, req.userId);
+    }
+
+    // Allow removing video via explicit flag
+    if (req.body.removeVideo === "true") {
+      if (entry.video) {
+        const oldVideoPath = path.join(UPLOADS_DIR, entry.video);
+        if (fs.existsSync(oldVideoPath)) {
+          fs.unlinkSync(oldVideoPath);
+        }
+        entry.video = null;
+      }
     }
 
     writeEntries(req.userId, entries);

@@ -12,6 +12,10 @@ function photoUrl(photoPath) {
   return `/uploads/${photoPath}?token=${encodeURIComponent(token)}`;
 }
 
+function mediaUrl(mediaPath) {
+  return `/uploads/${mediaPath}?token=${encodeURIComponent(token)}`;
+}
+
 // Handle 401 responses globally — redirect to login
 function handleAuthError(res) {
   if (res.status === 401) {
@@ -65,6 +69,19 @@ const detailReplaceGalleryBtn = document.getElementById("detail-replace-gallery-
 const detailReplacePhotoInput = document.getElementById("detail-replace-photo-input");
 const detailOnThisDay = document.getElementById("detail-onthisday");
 const detailOnThisDayLabel = document.getElementById("detail-onthisday-label");
+const detailVideo = document.getElementById("detail-video");
+const detailVideoContainer = document.getElementById("detail-video-container");
+const detailVideoUpload = document.getElementById("detail-video-upload");
+const detailAddVideoBtn = document.getElementById("detail-add-video-btn");
+const detailVideoInput = document.getElementById("detail-video-input");
+const detailVideoActions = document.getElementById("detail-video-actions");
+const detailReplaceVideoBtn = document.getElementById("detail-replace-video-btn");
+const detailRemoveVideoBtn = document.getElementById("detail-remove-video-btn");
+const detailReplaceVideoInput = document.getElementById("detail-replace-video-input");
+const entryVideo = document.getElementById("entry-video");
+const videoSelectBtn = document.getElementById("video-select-btn");
+const videoPreview = document.getElementById("video-preview");
+const previewVideo = document.getElementById("preview-video");
 const userGreeting = document.getElementById("user-greeting");
 const logoutBtn = document.getElementById("logout-btn");
 const offlineBanner = document.getElementById("offline-banner");
@@ -254,8 +271,12 @@ async function render() {
       const photoHtml = entry.photo
         ? `<img src="${photoUrl(entry.photo)}" alt="${escapeHtml(entry.headline)}" loading="lazy" />`
         : `<div class="card-placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`;
+      const videoIndicator = entry.video
+        ? `<div class="card-video-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>`
+        : "";
       card.innerHTML = `
         ${photoHtml}
+        ${videoIndicator}
         <div class="card-info">
           <div class="card-date">${formatDate(date)}</div>
           <div class="card-headline">${escapeHtml(entry.headline)}</div>
@@ -294,9 +315,11 @@ function openAddModal() {
   entryDate.max = todayStr();
   entryHeadline.value = "";
   entryPhoto.value = "";
+  entryVideo.value = "";
   cameraFile = null;
   entryPhoto.required = false;
   photoPreview.hidden = true;
+  videoPreview.hidden = true;
   formError.hidden = true;
   charCount.textContent = "(0 / 300)";
   submitBtn.textContent = "Save";
@@ -484,6 +507,22 @@ entryPhoto.addEventListener("change", () => {
   }
 });
 
+// Video select button (Add modal)
+videoSelectBtn.addEventListener("click", () => {
+  entryVideo.click();
+});
+
+entryVideo.addEventListener("change", () => {
+  const file = entryVideo.files[0];
+  if (file) {
+    const url = URL.createObjectURL(file);
+    previewVideo.src = url;
+    videoPreview.hidden = false;
+  } else {
+    videoPreview.hidden = true;
+  }
+});
+
 // Form submit
 entryForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -498,6 +537,11 @@ entryForm.addEventListener("submit", async (e) => {
   const photoFile = entryPhoto.files[0] || cameraFile;
   if (photoFile) {
     formData.append("photo", photoFile);
+  }
+
+  const videoFile = entryVideo.files[0];
+  if (videoFile) {
+    formData.append("video", videoFile);
   }
 
   try {
@@ -530,6 +574,23 @@ function openDetail(entry) {
   detailPhotoInput.value = "";
   detailReplacePhotoInput.value = "";
   detailPhotoError.hidden = true;
+
+  // Video
+  if (entry.video) {
+    detailVideo.src = mediaUrl(entry.video);
+    detailVideoContainer.hidden = false;
+    detailVideoUpload.hidden = true;
+    detailVideoActions.hidden = false;
+  } else {
+    detailVideo.src = "";
+    detailVideo.pause();
+    detailVideoContainer.hidden = true;
+    detailVideoUpload.hidden = false;
+    detailVideoActions.hidden = true;
+  }
+  detailVideoInput.value = "";
+  detailReplaceVideoInput.value = "";
+
   detailHeadline.textContent = entry.headline;
   detailHeadline.hidden = false;
   detailHeadlineInput.hidden = true;
@@ -548,6 +609,8 @@ function updateNavButtons() {
 function closeDetail() {
   detailOverlay.hidden = true;
   currentDetailId = null;
+  detailVideo.pause();
+  detailVideo.src = "";
 }
 
 detailClose.addEventListener("click", closeDetail);
@@ -832,6 +895,94 @@ async function uploadDetailPhoto(file) {
     detailImgContainer.hidden = false;
     detailPhotoUpload.hidden = true;
     detailPhotoActions.hidden = false;
+    await render();
+  } catch (err) {
+    detailPhotoError.textContent = err.message;
+    detailPhotoError.hidden = false;
+  }
+}
+
+// Video upload in detail view (add)
+detailAddVideoBtn.addEventListener("click", () => {
+  detailVideoInput.click();
+});
+
+detailVideoInput.addEventListener("change", async () => {
+  const file = detailVideoInput.files[0];
+  if (!file || !currentDetailId) return;
+  await uploadDetailVideo(file);
+});
+
+// Video replace in detail view
+detailReplaceVideoBtn.addEventListener("click", () => {
+  detailReplaceVideoInput.click();
+});
+
+detailReplaceVideoInput.addEventListener("change", async () => {
+  const file = detailReplaceVideoInput.files[0];
+  if (!file || !currentDetailId) return;
+  await uploadDetailVideo(file);
+});
+
+// Video remove
+detailRemoveVideoBtn.addEventListener("click", async () => {
+  if (!currentDetailId) return;
+  detailPhotoError.hidden = true;
+
+  try {
+    const formData = new FormData();
+    formData.append("removeVideo", "true");
+
+    const res = await fetch(`/api/entries/${currentDetailId}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: formData,
+    });
+
+    if (handleAuthError(res)) return;
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to remove video");
+    }
+
+    detailVideo.pause();
+    detailVideo.src = "";
+    detailVideoContainer.hidden = true;
+    detailVideoUpload.hidden = false;
+    detailVideoActions.hidden = true;
+    await render();
+  } catch (err) {
+    detailPhotoError.textContent = err.message;
+    detailPhotoError.hidden = false;
+  }
+});
+
+async function uploadDetailVideo(file) {
+  detailPhotoError.hidden = true;
+
+  const formData = new FormData();
+  formData.append("video", file);
+
+  try {
+    const res = await fetch(`/api/entries/${currentDetailId}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: formData,
+    });
+
+    if (handleAuthError(res)) return;
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to upload video");
+    }
+
+    const updated = await res.json();
+    detailVideo.src = mediaUrl(updated.video);
+    detailVideoContainer.hidden = false;
+    detailVideoUpload.hidden = true;
+    detailVideoActions.hidden = false;
     await render();
   } catch (err) {
     detailPhotoError.textContent = err.message;

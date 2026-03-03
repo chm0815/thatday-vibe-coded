@@ -76,6 +76,16 @@
             <img id="preview-img" src="" alt="Preview" />
           </div>
 
+          <label>Video</label>
+          <button type="button" id="video-select-btn" class="btn-secondary photo-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            Video auswahlen
+          </button>
+          <input type="file" id="entry-video" accept="video/*" hidden />
+          <div id="video-preview" class="photo-preview" hidden>
+            <video id="preview-video" src="" controls playsinline></video>
+          </div>
+
           <button type="submit" class="btn-primary" id="submit-btn">Save</button>
           <p id="form-error" class="form-error" hidden></p>
         </form>
@@ -90,6 +100,9 @@
         <div id="detail-img-container" class="detail-img-container">
           <img id="detail-img" src="" alt="" class="detail-img" />
           <div id="magnifier" class="magnifier" hidden></div>
+        </div>
+        <div id="detail-video-container" class="detail-video-container" hidden>
+          <video id="detail-video" class="detail-video" controls playsinline></video>
         </div>
         <div id="detail-photo-upload" class="detail-photo-upload" hidden>
           <p>No photo yet</p>
@@ -117,6 +130,25 @@
             </button>
           </div>
           <input type="file" id="detail-replace-photo-input" accept="image/*" hidden />
+        </div>
+        <div id="detail-video-upload" class="detail-video-upload" hidden>
+          <p>No video yet</p>
+          <button id="detail-add-video-btn" class="btn-secondary photo-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            Video hinzufugen
+          </button>
+          <input type="file" id="detail-video-input" accept="video/*" hidden />
+        </div>
+        <div id="detail-video-actions" class="detail-video-actions" hidden>
+          <button id="detail-replace-video-btn" class="btn-secondary photo-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            Video ersetzen
+          </button>
+          <button id="detail-remove-video-btn" class="btn-secondary photo-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Video entfernen
+          </button>
+          <input type="file" id="detail-replace-video-input" accept="video/*" hidden />
         </div>
         <p id="detail-photo-error" class="form-error detail-photo-error" hidden></p>
         <div class="detail-info">
