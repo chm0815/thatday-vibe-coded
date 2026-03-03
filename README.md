@@ -8,14 +8,16 @@ A personal daily journal app built with love and 100% vibe-coding.
 
 ## What it does
 
-Capture each day with a single photo and a short headline (max 300 characters). Browse your memories in a beautiful photo-tile grid, search through your entries, and view them in a slideshow. Works offline as a Progressive Web App (PWA), and can be installed as a native app on Android.
+Capture each day with a photo or video and a short headline (max 300 characters). Browse your memories in a beautiful photo-tile grid, discover "On This Day" entries from previous years, and view them in a slideshow. Works offline as a Progressive Web App (PWA), and can be installed as a native app on Android.
 
 ## Features
 
-- **One entry per day** — photo + headline
+- **One entry per day** — photo or video + headline
 - **Calendar view** — see every day from today back to your oldest entry, with month separators
 - **Empty placeholders** — click any day without an entry to add one
 - **Slideshow** — prev/next navigation through your entries (arrow keys or buttons)
+- **On This Day** — shows entries from the same date in previous years
+- **Video upload** — capture or upload videos alongside photos
 - **Light & Dark mode** — toggle in the header
 - **Filter** — show only days with entries
 - **Offline support** — works without internet via Service Worker
@@ -31,7 +33,7 @@ Capture each day with a single photo and a short headline (max 300 characters). 
 | Database | Flat JSON files (no external DB) |
 | Auth | JWT + bcrypt |
 | Frontend | Vanilla HTML, CSS, JavaScript |
-| Photo processing | Sharp (resize/compress to ≤500KB) |
+| Photo/Video processing | Sharp + FFmpeg (resize/compress to ≤500KB) |
 | PWA | Service Worker + Web Manifest |
 | Mobile | Capacitor (Android) |
 
@@ -94,6 +96,6 @@ npx cap run android
 
 ## 100% Vibe-Coded
 
-This app was built with intuition, iteration, and a healthy disregard for best practices. No tests. No type safety. No部署 pipeline. Just vibes and functionality.
+This app was built with intuition, iteration, and a healthy disregard for best practices. No tests. No type safety. No deployment pipeline. Just vibes and functionality.
 
 Built by Christoph Maurer
