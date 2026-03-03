@@ -614,6 +614,7 @@ function closeDetail() {
 }
 
 detailClose.addEventListener("click", closeDetail);
+document.getElementById("detail-ok").addEventListener("click", closeDetail);
 detailOverlay.addEventListener("click", (e) => {
   if (e.target === detailOverlay) closeDetail();
 });

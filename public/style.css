@@ -781,9 +781,40 @@ form .btn-primary {
 
 .detail-actions {
   padding: 0 1.5rem 1.2rem;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-actions > :nth-child(2) {
+  justify-self: center;
+}
+
+.detail-actions > :last-child {
+  justify-self: end;
+}
+
+.detail-actions .btn-danger,
+.detail-actions .btn-ok {
+  width: 5.5rem;
+  text-align: center;
+}
+
+.btn-ok {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-ok:hover {
+  opacity: 0.85;
 }
 
 .btn-onthisday {
