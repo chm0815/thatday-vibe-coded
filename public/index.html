@@ -97,6 +97,12 @@
       <button id="detail-prev" class="detail-nav detail-nav-left" title="Previous">&#8249;</button>
       <div class="modal modal-detail">
         <button id="detail-close" class="modal-close">&times;</button>
+        <div class="detail-info">
+          <h2 id="detail-date" class="detail-date editable" title="Click to change date"></h2>
+          <input type="text" id="detail-date-input" class="detail-date-input" hidden />
+          <p id="detail-headline" class="editable" title="Click to edit"></p>
+          <input type="text" id="detail-headline-input" class="detail-headline-input" maxlength="300" hidden />
+        </div>
         <div id="detail-img-container" class="detail-img-container">
           <img id="detail-img" src="" alt="" class="detail-img" />
           <div id="magnifier" class="magnifier" hidden></div>
@@ -151,17 +157,12 @@
           <input type="file" id="detail-replace-video-input" accept="video/*" hidden />
         </div>
         <p id="detail-photo-error" class="form-error detail-photo-error" hidden></p>
-        <div class="detail-info">
-          <h2 id="detail-headline" class="editable" title="Click to edit"></h2>
-          <input type="text" id="detail-headline-input" class="detail-headline-input" maxlength="300" hidden />
-          <p id="detail-date" class="detail-date"></p>
-        </div>
         <div class="detail-actions">
+          <button id="detail-delete" class="btn-danger">Delete</button>
           <button id="detail-onthisday" class="btn-onthisday" hidden>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span id="detail-onthisday-label">On This Day</span>
           </button>
-          <button id="detail-delete" class="btn-danger">Delete</button>
         </div>
       </div>
       <button id="detail-next" class="detail-nav detail-nav-right" title="Next">&#8250;</button>
