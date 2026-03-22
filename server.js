@@ -571,6 +571,18 @@ app.put(
   }
 );
 
+const PID_FILE = path.join(__dirname, '.server.pid');
+
+function shutdown() {
+  console.log(`thatday stopped (pid ${process.pid})`);
+  try { fs.unlinkSync(PID_FILE); } catch (_) {}
+  process.exit(0);
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
 app.listen(PORT, () => {
-  console.log(`thatday is running at http://localhost:${PORT}`);
+  fs.writeFileSync(PID_FILE, process.pid.toString());
+  console.log(`thatday is running at http://localhost:${PORT} (pid ${process.pid})`);
 });
