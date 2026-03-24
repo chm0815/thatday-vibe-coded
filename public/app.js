@@ -87,6 +87,7 @@ const userGreeting = document.getElementById("user-greeting");
 const logoutBtn = document.getElementById("logout-btn");
 const offlineBanner = document.getElementById("offline-banner");
 const entriesOnlyCheckbox = document.getElementById("entries-only");
+const entryCountEl = document.getElementById("entry-count");
 const themeToggle = document.getElementById("theme-toggle");
 const confirmOverlay = document.getElementById("confirm-overlay");
 const confirmTitle = document.getElementById("confirm-title");
@@ -214,11 +215,16 @@ async function render() {
   if (entries.length === 0) {
     emptyState.hidden = false;
     grid.hidden = true;
+    entryCountEl.hidden = true;
     return;
   }
 
   emptyState.hidden = true;
   grid.hidden = false;
+  entryCountEl.textContent = entries.length === 1
+    ? "1 entry"
+    : `${entries.length} entries`;
+  entryCountEl.hidden = false;
 
   // Build a lookup: date string → entry
   const entryByDate = {};
