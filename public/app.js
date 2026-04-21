@@ -94,6 +94,9 @@ const confirmTitle = document.getElementById("confirm-title");
 const confirmMessage = document.getElementById("confirm-message");
 const confirmOk = document.getElementById("confirm-ok");
 const confirmCancel = document.getElementById("confirm-cancel");
+const searchInput = document.getElementById("search-input");
+const searchClear = document.getElementById("search-clear");
+const searchResultCount = document.getElementById("search-result-count");
 
 let currentDetailId = null;
 let currentDetailDate = null;
@@ -125,6 +128,22 @@ themeToggle.addEventListener("click", () => {
 entriesOnlyCheckbox.checked = localStorage.getItem("entriesOnly") === "true";
 entriesOnlyCheckbox.addEventListener("change", () => {
   localStorage.setItem("entriesOnly", entriesOnlyCheckbox.checked);
+  render();
+});
+
+// --- Search ---
+
+let searchDebounceTimer = null;
+
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchDebounceTimer);
+  searchClear.hidden = !searchInput.value;
+  searchDebounceTimer = setTimeout(() => render(), 300);
+});
+
+searchClear.addEventListener("click", () => {
+  searchInput.value = "";
+  searchClear.hidden = true;
   render();
 });
 
@@ -211,6 +230,10 @@ async function render() {
   currentEntries = entries;
 
   grid.innerHTML = "";
+  searchResultCount.hidden = true;
+
+  const query = searchInput.value.trim().toLowerCase();
+  const isSearching = query.length > 0;
 
   if (entries.length === 0) {
     emptyState.hidden = false;
@@ -231,6 +254,72 @@ async function render() {
   for (const entry of entries) {
     entryByDate[entry.date] = entry;
   }
+
+  // If searching, filter entries and show only matching ones
+  if (isSearching) {
+    const matchingEntries = entries.filter((e) =>
+      e.headline.toLowerCase().includes(query)
+    );
+
+    if (matchingEntries.length === 0) {
+      searchResultCount.textContent = "No entries found";
+      searchResultCount.hidden = false;
+      grid.hidden = true;
+      return;
+    }
+
+    searchResultCount.textContent = matchingEntries.length === 1
+      ? "1 result"
+      : `${matchingEntries.length} results`;
+    searchResultCount.hidden = false;
+
+    // Store matching entries for navigation
+    currentCalendar = matchingEntries.map((e) => ({ date: e.date, entry: e }));
+
+    let currentMonth = null;
+    matchingEntries.forEach((entry) => {
+      const month = entry.date.slice(0, 7);
+      if (month !== currentMonth) {
+        currentMonth = month;
+        const d = new Date(entry.date + "T00:00:00");
+        const label = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+        const sep = document.createElement("div");
+        sep.className = "month-separator";
+        sep.innerHTML = `<span>${label}</span>`;
+        grid.appendChild(sep);
+      }
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.dataset.id = entry.id;
+      card.dataset.date = entry.date;
+
+      const photoHtml = entry.photo
+        ? `<img src="${photoUrl(entry.photo)}" alt="${escapeHtml(entry.headline)}" loading="lazy" />`
+        : `<div class="card-placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`;
+      const videoIndicator = entry.video
+        ? `<div class="card-video-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>`
+        : "";
+
+      // Highlight matching text in headline
+      const highlightedHeadline = highlightMatch(escapeHtml(entry.headline), query);
+
+      card.innerHTML = `
+        ${photoHtml}
+        ${videoIndicator}
+        <div class="card-info">
+          <div class="card-date">${formatDate(entry.date)}</div>
+          <div class="card-headline">${highlightedHeadline}</div>
+        </div>
+      `;
+      card.addEventListener("click", () => openDetail(entry));
+      grid.appendChild(card);
+    });
+
+    return;
+  }
+
+  // Normal (non-search) rendering below
 
   // Date range: today down to one month past the oldest entry
   const today = new Date(todayStr() + "T00:00:00");
@@ -312,6 +401,12 @@ function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
+}
+
+function highlightMatch(html, query) {
+  if (!query) return html;
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+  return html.replace(regex, `<mark class="search-highlight">$1</mark>`);
 }
 
 // --- Add Modal ---
